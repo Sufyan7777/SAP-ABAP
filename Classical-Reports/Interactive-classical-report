@@ -1,0 +1,133 @@
+*&---------------------------------------------------------------------*
+*& Report Z_ABBC
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT Z_CLASSICAL_REPORT111.
+
+
+TYPES : BEGIN OF LTY_FINAL,
+          MATNR TYPE  MATNR,
+          WERKS type  WERKS_D,
+          LGORT TYPE  LGORT_D,
+          BUDAT_MKPF type	BUDAT,
+
+          MENGE	TYPE MENGE_D,
+          MAKTX TYPE  MAKTX,
+          LGOBE TYPE  LGOBE,
+
+
+
+
+
+
+        END OF LTY_FINAL.
+
+        Types: BEGIN OF LTY_plant,
+
+  WERKS type  WERKS_D,
+NAME1 type  NAME1,
+STRAS type  STRAS,
+
+  End of LTY_plant.
+
+DATA: LT_FINAL TYPE TABLE OF LTY_FINAL.
+DATA: LWA_FINAL TYPE LTY_FINAL.
+
+
+  DATA: LT_plant TYPE TABLE OF LTY_plant.
+DATA: LWA_plant TYPE LTY_plant.
+
+
+DATA: WERKS_TOTAL TYPE p DECIMALS 2.
+
+DATA: PREV_WERKS TYPE WERKS.
+
+
+
+Data: LV_ONO1 type MATNR.
+SELECT-OPTIONS : P_NO for LV_ONO1.
+
+
+DATA: LV_ONO TYPE BUDAT.
+SELECT-OPTIONS : S_ONO FOR LV_ONO.
+
+
+
+ START-OF-SELECTION.
+SELECT A~MATNR A~WERKS A~LGORT A~BUDAT_MKPF  A~MENGE B~MAKTX C~LGOBE
+  FROM MSEG AS A
+  JOIN MAKT AS B ON A~MATNR = B~MATNR
+  JOIN T001L AS C ON A~LGORT = C~LGORT
+  INTO TABLE LT_FINAL
+  WHERE A~MATNR IN p_no
+  AND A~BUDAT_MKPF IN S_ONO
+  ORDER BY A~WERKS.
+
+
+
+
+
+
+
+Write : / Sy-uline(150).
+Write :/ Sy-vline , text-001  ,20 sy-vline, text-002 ,30 sy-vline, text-003, 50 sy-vline ,text-004 ,65 sy-vline,  text-005,85 sy-vline, text-006, 130 sy-vline, text-007, 150 sy-vline.
+Write : / Sy-uline(150).
+
+LOOP AT LT_FINAL INTO LWA_FINAL.
+
+  IF PREV_WERKS NE LWA_FINAL-WERKS.
+    IF PREV_WERKS IS NOT INITIAL.
+
+      WRITE: / sy-vline,' Sub Total:  ', WERKS_TOTAL under text-005 , 150 sy-vline.
+      WRITE : / sy-uline(150).
+      CLEAR WERKS_TOTAL.
+    ENDIF.
+    PREV_WERKS = LWA_FINAL-WERKS.
+  ENDIF.
+
+  WRITE: /
+         sy-vline, LWA_FINAL-MATNR Under text-001 COLOR 2 , 20 sy-vline,
+         LWA_FINAL-WERKS under text-002 color 2 ,30 sy-vline,
+         LWA_FINAL-LGORT Under text-003 color 2 ,50 sy-vline,
+         LWA_FINAL-BUDAT_MKPF under text-004 color 2 ,65 sy-vline,
+         LWA_FINAL-MENGE under text-005 color 2,85 sy-vline,
+         LWA_FINAL-MAKTX under text-006 color 2,130 sy-vline,
+         LWA_FINAL-LGOBE under text-007 color 2 , 150 sy-vline.
+
+  WRITE : / sy-uline(150).
+
+  WERKS_TOTAL = WERKS_TOTAL + LWA_FINAL-MENGE.
+
+ENDLOOP.
+
+IF WERKS_TOTAL NE 0.
+
+  WRITE: / sy-vline,' Sub Total:  ', WERKS_TOTAL under text-005, 150 sy-vline.
+WRITE : / sy-uline(150).
+ENDIF.
+
+
+
+
+
+
+AT LINE-SELECTION.
+     Write : / Sy-uline(90).
+
+Select Werks, Name1,STRAS from T001W
+  into table @lt_plant where werks = @sy-lisel+21(5).
+
+  Write :/ Sy-vline , text-002   ,20 sy-vline, text-008  ,55 sy-vline, text-009 , 90 sy-vline.
+       Write : / Sy-uline(90).
+
+    LOOP AT lt_plant into lwa_plant.
+
+      Write: / Sy-vline, lwa_plant-WERKS under text-002 color 3 ,20 sy-vline, Lwa_plant-NAME1 under text-008 COLOR 4, 55 sy-vline, LWa_plant-STRAS under text-009 color 5 , 90 sy-vline.
+Write : / Sy-uline(90).
+    ENDLOOP.
+*
+
+
+    TOP-OF-PAGE DURING LINE-SELECTION.
+    Write: /2 'Plant Details'.
